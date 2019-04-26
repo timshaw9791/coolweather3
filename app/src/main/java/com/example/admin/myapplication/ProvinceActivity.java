@@ -42,7 +42,7 @@ public class ProvinceActivity extends AppCompatActivity {
         this.textView = (TextView) findViewById(R.id.textView);
         this.listview = (ListView) findViewById(R.id.listview);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
         listview.setAdapter(adapter);
        this.listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
            @Override
@@ -63,10 +63,12 @@ public class ProvinceActivity extends AppCompatActivity {
 
                 parseJSONObject(responseText);
 
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         textView.setText(responseText);
+                        adapter.notifyDataSetChanged();
                     }
                 });
             }
