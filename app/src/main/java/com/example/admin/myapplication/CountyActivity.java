@@ -15,6 +15,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -24,7 +26,7 @@ public class CountyActivity extends AppCompatActivity {
     private TextView textView=null;
 
     private String[] weather_ids={"", "", "","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""};
-    private String[] data ={"", "", "","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""};
+    private List<String> data =new ArrayList<>();
     private ListView contrylistview;
 
 
@@ -38,7 +40,7 @@ public class CountyActivity extends AppCompatActivity {
         Intent intent=getIntent();
         int cityid=intent.getIntExtra("cid",0);
         int pid=intent.getIntExtra("pid",0);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
         contrylistview.setAdapter(adapter);
         this.contrylistview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -59,7 +61,7 @@ public class CountyActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        textView.setText(responseText);
+                        adapter.notifyDataSetChanged();
                     }});
             }
             @Override
@@ -70,12 +72,13 @@ public class CountyActivity extends AppCompatActivity {
     }
     private void parseJSONObject(String responseText) {
         JSONArray jsonArray = null;
+        this.data.clear();
         try {
             jsonArray = new JSONArray(responseText);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = null;
                 jsonObject = jsonArray.getJSONObject(i);
-                this.data[i]=jsonObject.getString("name");
+                this.data.add(jsonObject.getString("name"));
                 this.weather_ids[i]=jsonObject.getString("weather_id");
             }
 
