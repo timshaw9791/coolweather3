@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,70 +26,69 @@ import okhttp3.Response;
  */
 public class ProvinceActivity extends AppCompatActivity {
 
-    private int[] cids=new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
-    private String currentlevel="province";//city
-    private int pid=0;//当前选中的省id
+    public static final String PROVINCE = "province";
+    public static final String CITY = "city";
+    public static final String COUNTY = "county";
+    //当前的层级：province，city,county
+    private String currentlevel =PROVINCE;//city
+    private int provinceId = 0;//当前选中的省id
+    private int cityId=0;
+    private int weatherId=0;
+    private List<Integer> pids = new ArrayList<>();
+    private List<String> data = new ArrayList<>();
 
-    private List<String> data2=new ArrayList();
-    private int[] pids=new int[]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
-    private List<String> data =new ArrayList<>();
-    private TextView textView;
     private ListView listview;
 
-
-
-//ProvinceActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
         //TODO if(currentlevel=="city"){
         //   Intent intent=getIntent();
-        //        final int pid=intent.getIntExtra("pid",0);
+        //        final int provinceId=intent.getIntExtra("provinceId",0);
         // }
-        this.textView = (TextView) findViewById(R.id.textView);
         this.listview = (ListView) findViewById(R.id.listview);
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
         listview.setAdapter(adapter);
-       this.listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-           @Override
-           public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               Log.i("点击了哪一个",""+position+":"+ProvinceActivity.this.pids[position]+":"+ProvinceActivity.this.data.get(position));
-               pid=ProvinceActivity.this.pids[position];
-               currentlevel="city";
-               getData(adapter);
+        this.listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.i("点击了哪一个", "" + position + ":" + ProvinceActivity.this.pids.get(position) + ":" + ProvinceActivity.this.data.get(position));
 
-/*
-               Intent intent= new Intent(ProvinceActivity.this,CityActivity.class);
-               intent.putExtra("pid",ProvinceActivity.this.pids[position]);
+                if(currentlevel== PROVINCE){
+                    currentlevel = CITY;
+                    provinceId = ProvinceActivity.this.pids.get(position);
+                }else if(currentlevel==CITY){
+                    currentlevel = COUNTY;
+                    cityId = ProvinceActivity.this.pids.get(position);
+                }else if(currentlevel==COUNTY){
+                    //weatherId=ProvinceActivity.this.pids.get(position);
+                 /*
+                    Intent intent= new Intent(ProvinceActivity.this,WeatherActivity.class);
+                    intent.putExtra("wid",weather_ids[position]);
+                    startActivity(intent);
+                    */
+                }
 
-               if (currentlevel == "city") {
-                   intent.putExtra("cid", cids[position]);
-               }
-               startActivity(intent);
-               */
-           }
-       });
-
+                getData(adapter);
+            }
+        });
         getData(adapter);
+
     }
 
     private void getData(final ArrayAdapter<String> adapter) {
-        String weatherUrl = currentlevel=="city"?"http://guolin.tech/api/china/"+pid:"http://guolin.tech/api/china";
+        String weatherUrl = currentlevel == PROVINCE ? "http://guolin.tech/api/china":(currentlevel==CITY?"http://guolin.tech/api/china/" + provinceId :"http://guolin.tech/api/china/" + provinceId+"/"+cityId);
         //    String weatherUrl = "http://guolin.tech/api/china";
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String responseText = response.body().string();
-
                 parseJSONObject(responseText);
-
-
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                       // textView.setText(responseText);
                         adapter.notifyDataSetChanged();
                     }
                 });
@@ -98,7 +96,6 @@ public class ProvinceActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call call, IOException e) {
-
             }
         });
     }
@@ -106,19 +103,15 @@ public class ProvinceActivity extends AppCompatActivity {
     private void parseJSONObject(String responseText) {
         JSONArray jsonArray = null;
         this.data.clear();
+        this.pids.clear();
         try {
             jsonArray = new JSONArray(responseText);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = null;
                 jsonObject = jsonArray.getJSONObject(i);
                 this.data.add(jsonObject.getString("name"));
-                if (currentlevel == "city") {
-                    this.cids[i] = jsonObject.getInt("id");
-                } else {
-                    this.pids[i] = jsonObject.getInt("id");
-                }
+                this.pids.add(jsonObject.getInt("id"));
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
